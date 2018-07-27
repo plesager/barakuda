@@ -78,8 +78,12 @@ function barakuda_check()
     for og in ${ORCA_LIST}; do
         ORCA_CONF="`echo ${CONFIG} | cut -d '_' -f1`.`echo ${CONFIG} | cut -d '_' -f2`"
         #echo " ${og} / ${ORCA_CONF}"
-        ca=""; ca=`echo ${ORCA_CONF} | grep ${og}`
-        if [ "${ca}" != "" ]; then export ORCA=${og}; fi
+
+        if echo ${ORCA_CONF} | grep -q ${og}
+        then
+            export ORCA=${og}
+            break
+        fi
     done
 
     if [ -z ${ORCA} ]; then echo "ORCA grid of config ${CONFIG} not supported yet"; exit; fi
@@ -245,8 +249,8 @@ function barakuda_first_last_years()
 
     # Try to guess the first year from stored "grid_T" files:
     YEAR_INI=`\ls ${CPREF}*${ctest}* | sed -e s/"${CPREF}"/""/g | head -1 | cut -c1-4`
-    echo ${YEAR_INI} |  grep "[^0-9]" >/dev/null ;   # Checking if it's an integer:
-    if [ ! "$?" -eq 1 ]; then
+    if [[ ! ${YEAR_INI} =~ ^[0-9]+$ ]] # Checking if it's an integer
+    then
         echo "ERROR: it was imposible to guess initial year from your input files"
         echo "       maybe the directory contains non-related files..."
         exit
@@ -268,8 +272,8 @@ function barakuda_first_last_years()
         export YEAR_END=$((${YEAR_INI}+${nby_ece}))
     else
         export YEAR_END=`\ls ${CPREF}*${ctest}* | sed -e s/"${CPREF}"/''/g | tail -1 | cut -c1-4`
-        echo ${YEAR_END} |  grep "[^0-9]" >/dev/null; # Checking if it's an integer
-        if [ ! "$?" -eq 1 ]; then
+        if [[ ! ${YEAR_END} =~ ^[0-9]+$ ]] # Checking if it's an integer
+        then
             echo "ERROR: it was imposible to guess the year coresponding to the last saved year!"
             echo "       => check your NEMO output directory and file naming..."; exit
         fi
@@ -327,8 +331,9 @@ function barakuda_import_mesh_mask()
         fi
     fi
     #Fix, in case old nemo (prior version 3.6) must rename some metrics param:
-    ca=""; ca=`${NCDUMP} -h mesh_mask.nc  | grep 'e3t('`
-    if [ ! "${ca}" = "" ]; then
+    if ${NCDUMP} -h mesh_mask.nc | grep -q 'e3t('; then
+    # ca=""; ca=`${NCDUMP} -h mesh_mask.nc  | grep 'e3t('`
+    # if [ ! "${ca}" = "" ]; then
         echo "Renaming some metrics into mesh_mask.nc !!!"
         ncrename -v e3t_0,e3t_1d -v e3w_0,e3w_1d -v gdept_0,gdept_1d -v gdepw_0,gdepw_1d  mesh_mask.nc
         ncrename -v e3t,e3t_0 -v e3u,e3u_0 -v e3v,e3v_0 -v e3w,e3w_0                      mesh_mask.nc
@@ -663,8 +668,9 @@ epstopng()
 ipresent_var_in_ncf()
 {
     ipv=0
-    ca=`${NCDUMP} -h $1 | grep "${2}(time_counter" | grep float`
-    if [ ! "${ca}" = "" ]; then
+    if ${NCDUMP} -h $1 | grep "${2}(time_counter" | grep -q float ; then
+    #ca=`${NCDUMP} -h $1 | grep "${2}(time_counter" | grep float`
+    #if [ ! "${ca}" = "" ]; then
         #echo "   variable ${2} is present in file $1"
         ipv=1
         #else
