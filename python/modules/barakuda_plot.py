@@ -14,12 +14,14 @@
 import os
 import sys
 import numpy as nmp
-
+#import warnings
+import math
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 
+#warnings.simplefilter('error', UserWarning)
 
 # Some defaults:
 #WDTH_DEF     = 10.
@@ -1811,6 +1813,13 @@ def __time_axis_minor_ticks__(dt):
 
 
 def __suitable_axis_dx__(hmin, hmax, nb_val=20, lsym0=False):
+    if math.isnan(hmin):
+        hmin=0.
+        print "__suitable_axis_dx__: NaN hmin set to 0." 
+    if math.isnan(hmax):
+        hmax=0.
+        print "__suitable_axis_dx__: NaN hmax set to 0." 
+
     if (hmin,hmax) == (0.,0.) or (hmin,hmax) == (0,0):
         dh = 0.
     else:
@@ -1818,8 +1827,15 @@ def __suitable_axis_dx__(hmin, hmax, nb_val=20, lsym0=False):
         lfound = False
         iexp = 20
         while not lfound :
-            if dh%(10.**(iexp-1)) != dh: lfound = True
+            #PLSPLS if dh%(10.**(iexp-1)) == dh:
+            #PLSPLS     print 'PLSPLS',dh,iexp,10.**(iexp-1) 
+            #PLSPLS if dh%(10.**(iexp-1)) != dh: lfound = True
+            if math.fmod(dh,10.**(iexp-1)) != dh or iexp<-10: lfound = True
             iexp = iexp - 1
+            if math.isnan(dh):
+                dh=0.
+                print "__suitable_axis_dx__: NaN dh set to 0." 
+
         if iexp < 1:
             dh = round(dh, -iexp)
         else:
